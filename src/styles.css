@@ -1,0 +1,333 @@
+:root {
+  color: #17211f;
+  background: #f7f4ec;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background:
+    linear-gradient(180deg, rgba(22, 56, 50, 0.08), rgba(247, 244, 236, 0) 280px),
+    #f7f4ec;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  align-items: center;
+  border: 0;
+  cursor: pointer;
+  display: inline-flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+main {
+  margin: 0 auto;
+  max-width: 980px;
+  padding: 22px 16px 28px;
+}
+
+.app-header {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  margin: 8px 0 18px;
+}
+
+.eyebrow {
+  color: #7a4d19;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  margin: 0 0 4px;
+  text-transform: uppercase;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+h1 {
+  color: #163832;
+  font-size: clamp(2rem, 8vw, 4rem);
+  line-height: 0.95;
+}
+
+h2 {
+  color: #1b2b28;
+  font-size: 1.35rem;
+}
+
+h3 {
+  color: #1b2b28;
+  font-size: 1rem;
+}
+
+.season-control,
+.tabs,
+.panel,
+.meeting,
+.lodge-card {
+  border: 1px solid rgba(22, 56, 50, 0.15);
+  box-shadow: 0 12px 30px rgba(51, 43, 28, 0.08);
+}
+
+.season-control {
+  align-items: center;
+  background: #ffffff;
+  border-radius: 8px;
+  display: grid;
+  flex: 0 0 auto;
+  grid-template-columns: 38px minmax(88px, auto) 38px;
+  overflow: hidden;
+}
+
+.season-control button {
+  background: #163832;
+  color: #fff;
+  height: 40px;
+}
+
+.season-control span {
+  font-weight: 800;
+  padding: 0 12px;
+  text-align: center;
+}
+
+.tabs {
+  background: #ffffff;
+  border-radius: 8px;
+  display: grid;
+  gap: 4px;
+  grid-template-columns: 1fr 1fr;
+  margin-bottom: 14px;
+  padding: 4px;
+}
+
+.tabs button {
+  background: transparent;
+  border-radius: 6px;
+  color: #51605c;
+  min-height: 44px;
+}
+
+.tabs button.active {
+  background: #d6a84f;
+  color: #18231f;
+  font-weight: 800;
+}
+
+.panel {
+  background: rgba(255, 255, 255, 0.82);
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.panel-title {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.primary,
+.ghost {
+  border-radius: 8px;
+  min-height: 42px;
+  padding: 0 14px;
+}
+
+.primary {
+  background: #163832;
+  color: #fff;
+  font-weight: 800;
+}
+
+.ghost {
+  background: rgba(22, 56, 50, 0.08);
+  color: #163832;
+}
+
+.form-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-bottom: 14px;
+}
+
+.form-grid input,
+.form-grid select,
+.form-grid textarea {
+  background: #fff;
+  border: 1px solid rgba(22, 56, 50, 0.18);
+  border-radius: 8px;
+  color: #17211f;
+  min-height: 44px;
+  padding: 10px 12px;
+  width: 100%;
+}
+
+.form-grid textarea {
+  grid-column: 1 / -1;
+  min-height: 82px;
+  resize: vertical;
+}
+
+.form-grid button {
+  justify-self: start;
+}
+
+.meeting-list,
+.lodge-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.meeting {
+  align-items: stretch;
+  background: #ffffff;
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 46px 64px 1fr;
+  min-height: 104px;
+  padding: 10px;
+}
+
+.meeting.visited {
+  background: #eef6ef;
+}
+
+.tick {
+  align-self: center;
+  background: #f7f4ec;
+  border: 1px solid rgba(22, 56, 50, 0.18);
+  border-radius: 8px;
+  color: #163832;
+  height: 42px;
+  width: 42px;
+}
+
+.visited .tick {
+  background: #2f745f;
+  color: #fff;
+}
+
+.date-block {
+  align-items: center;
+  background: #163832;
+  border-radius: 8px;
+  color: #fff;
+  display: grid;
+  justify-items: center;
+  padding: 8px 4px;
+}
+
+.date-block strong {
+  color: #d6a84f;
+  font-size: 1.75rem;
+  line-height: 1;
+}
+
+.date-block span {
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.meeting-body {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.meeting-heading {
+  align-items: start;
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.meeting-heading span {
+  background: rgba(214, 168, 79, 0.25);
+  border-radius: 999px;
+  color: #6c4614;
+  flex: 0 0 auto;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 4px 8px;
+}
+
+.meeting-body p,
+.lodge-card p {
+  align-items: center;
+  color: #56635f;
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 0.92rem;
+  gap: 5px;
+  line-height: 1.35;
+}
+
+.notes {
+  color: #6d5b40;
+}
+
+.lodge-grid {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.lodge-card {
+  background: #ffffff;
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+}
+
+@media (max-width: 680px) {
+  main {
+    padding: 16px 12px 24px;
+  }
+
+  .app-header {
+    align-items: stretch;
+    display: grid;
+  }
+
+  .season-control {
+    justify-self: start;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .meeting {
+    grid-template-columns: 42px 58px 1fr;
+    padding: 8px;
+  }
+
+  .meeting-heading {
+    display: grid;
+    justify-content: stretch;
+  }
+}

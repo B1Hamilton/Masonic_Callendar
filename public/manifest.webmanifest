@@ -1,0 +1,17 @@
+{
+  "name": "Masonic Calendar",
+  "short_name": "Calendar",
+  "description": "Track lodge meetings, visits, and special meetings.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f7f4ec",
+  "theme_color": "#163832",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
