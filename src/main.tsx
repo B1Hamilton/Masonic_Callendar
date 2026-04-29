@@ -66,6 +66,7 @@ const STORAGE_KEY = "masonic-calendar-store-v1";
 const weekdayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const defaultMeetingMonths = [8, 9, 10, 11, 0, 1, 2, 3];
+const defaultPrincipalVisits: Record<PrincipalVisit, boolean> = { j: false, h: false, z: false };
 
 const defaultStore: Store = {
   lodges: [
@@ -91,7 +92,7 @@ const defaultStore: Store = {
       months: defaultMeetingMonths,
       weekdays: [3],
       ordinals: [3],
-      principalVisits: { j: false, h: false, z: false },
+      principalVisits: defaultPrincipalVisits,
       notes: "Meets third Wednesday, September to April.",
     },
     {
@@ -103,7 +104,7 @@ const defaultStore: Store = {
       months: defaultMeetingMonths,
       weekdays: [4],
       ordinals: [4],
-      principalVisits: { j: false, h: false, z: false },
+      principalVisits: defaultPrincipalVisits,
       notes: "Meets fourth Thursday, September to April.",
     },
     {
@@ -115,7 +116,7 @@ const defaultStore: Store = {
       months: defaultMeetingMonths,
       weekdays: [2],
       ordinals: [2],
-      principalVisits: { j: false, h: false, z: false },
+      principalVisits: defaultPrincipalVisits,
       notes: "Meets second Tuesday, September to April.",
     },
     {
@@ -127,7 +128,7 @@ const defaultStore: Store = {
       months: defaultMeetingMonths,
       weekdays: [1],
       ordinals: [2],
-      principalVisits: { j: false, h: false, z: false },
+      principalVisits: defaultPrincipalVisits,
       notes: "Meets second Monday, September to April.",
     },
     {
@@ -139,7 +140,7 @@ const defaultStore: Store = {
       months: defaultMeetingMonths,
       weekdays: [4],
       ordinals: [3],
-      principalVisits: { j: false, h: false, z: false },
+      principalVisits: defaultPrincipalVisits,
       notes: "Meets third Thursday, September to April.",
     },
     {
@@ -151,7 +152,7 @@ const defaultStore: Store = {
       months: defaultMeetingMonths,
       weekdays: [2],
       ordinals: [1],
-      principalVisits: { j: false, h: false, z: false },
+      principalVisits: defaultPrincipalVisits,
       notes: "Meets first Tuesday, September to April.",
     },
   ],
@@ -159,13 +160,36 @@ const defaultStore: Store = {
   visited: {},
 };
 
+function normalizeChapter(chapter: Chapter): Chapter {
+  return {
+    ...chapter,
+    months: chapter.months?.length ? chapter.months : defaultMeetingMonths,
+    weekdays: chapter.weekdays ?? [],
+    ordinals: chapter.ordinals ?? [],
+    principalVisits: { ...defaultPrincipalVisits, ...chapter.principalVisits },
+  };
+}
+
+function normalizeStore(value: Partial<Store>): Store {
+  const chapters = value.chapters?.length ? value.chapters : defaultStore.chapters;
+
+  return {
+    ...defaultStore,
+    ...value,
+    lodges: value.lodges ?? defaultStore.lodges,
+    chapters: chapters.map(normalizeChapter),
+    specialMeetings: value.specialMeetings ?? defaultStore.specialMeetings,
+    visited: value.visited ?? defaultStore.visited,
+  };
+}
+
 function loadStore(): Store {
   const raw = localStorage.getItem(STORAGE_KEY);
   if (!raw) return defaultStore;
 
   try {
     const parsed = JSON.parse(raw);
-    return { ...defaultStore, ...parsed, chapters: parsed.chapters ?? defaultStore.chapters };
+    return normalizeStore(parsed);
   } catch {
     return defaultStore;
   }
@@ -211,7 +235,7 @@ function seasonMonths(startYear: number) {
 }
 
 function buildMeetings(store: Store, startYear: number) {
-  const lodgeMeetings = store.lodges.flatMap((lodge) =>
+  const lodgeMeetings = (store.lodges ?? []).flatMap((lodge) =>
     seasonMonths(startYear)
       .filter(({ month }) => lodge.months.includes(month))
       .flatMap(({ month, year }) =>
@@ -233,7 +257,7 @@ function buildMeetings(store: Store, startYear: number) {
       )
   );
 
-  const chapterMeetings = store.chapters.flatMap((chapter) =>
+  const chapterMeetings = (store.chapters ?? []).flatMap((chapter) =>
     seasonMonths(startYear)
       .filter(({ month }) => chapter.months.includes(month))
       .flatMap(({ month, year }) =>
@@ -330,7 +354,7 @@ function App() {
           return;
         }
 
-        patchStore({ ...defaultStore, ...imported, chapters: imported.chapters ?? defaultStore.chapters });
+        patchStore(normalizeStore(imported));
         setBackupMessage("Backup imported.");
       } catch {
         setBackupMessage("That file could not be read.");
