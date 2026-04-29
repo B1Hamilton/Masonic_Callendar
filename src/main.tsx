@@ -1,7 +1,7 @@
 import { StrictMode, useState } from "react";
-import type { FormEvent } from "react";
+import type { ChangeEvent, FormEvent } from "react";
 import { createRoot } from "react-dom/client";
-import { CalendarDays, Check, MapPin, Plus, ScrollText, Settings2, Trash2 } from "lucide-react";
+import { CalendarDays, Check, Download, MapPin, Plus, ScrollText, Settings2, Trash2, Upload } from "lucide-react";
 import "./styles.css";
 
 type Weekday = 0 | 1 | 2 | 3 | 4 | 5 | 6;
@@ -83,6 +83,12 @@ function saveStore(store: Store) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
 }
 
+function isStore(value: unknown): value is Store {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as Store;
+  return Array.isArray(candidate.lodges) && Array.isArray(candidate.specialMeetings) && typeof candidate.visited === "object";
+}
+
 function getSeasonStartYear(today = new Date()) {
   return today.getMonth() >= 7 ? today.getFullYear() : today.getFullYear() - 1;
 }
@@ -147,9 +153,10 @@ function buildMeetings(store: Store, startYear: number) {
 function App() {
   const [store, setStore] = useStoredState();
   const [seasonStart, setSeasonStart] = useStateNumber(getSeasonStartYear());
-  const [view, setView] = useStateText<"calendar" | "lodges">("calendar");
+  const [view, setView] = useStateText<"calendar" | "lodges" | "backup">("calendar");
   const [showSpecialForm, setShowSpecialForm] = useState(false);
   const [showLodgeForm, setShowLodgeForm] = useState(false);
+  const [backupMessage, setBackupMessage] = useState("");
   const meetings = buildMeetings(store, seasonStart);
 
   function patchStore(next: Store) {
@@ -159,6 +166,49 @@ function App() {
 
   function toggleVisited(id: string) {
     patchStore({ ...store, visited: { ...store.visited, [id]: !store.visited[id] } });
+  }
+
+  function exportData() {
+    const backup = {
+      app: "masonic-calendar",
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      data: store,
+    };
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `masonic-calendar-${new Date().toISOString().slice(0, 10)}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+    setBackupMessage("Export ready.");
+  }
+
+  function importData(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(String(reader.result));
+        const imported = isStore(parsed) ? parsed : parsed.data;
+
+        if (!isStore(imported)) {
+          setBackupMessage("That file does not look like a calendar backup.");
+          return;
+        }
+
+        patchStore(imported);
+        setBackupMessage("Backup imported.");
+      } catch {
+        setBackupMessage("That file could not be read.");
+      } finally {
+        event.target.value = "";
+      }
+    };
+    reader.readAsText(file);
   }
 
   function addSpecial(event: FormEvent<HTMLFormElement>) {
@@ -231,6 +281,9 @@ function App() {
         <button className={view === "lodges" ? "active" : ""} onClick={() => setView("lodges")}>
           <Settings2 size={18} /> Lodges
         </button>
+        <button className={view === "backup" ? "active" : ""} onClick={() => setView("backup")}>
+          <Download size={18} /> Backup
+        </button>
       </nav>
 
       {view === "calendar" ? (
@@ -295,7 +348,7 @@ function App() {
             ))}
           </div>
         </section>
-      ) : (
+      ) : view === "lodges" ? (
         <section className="panel">
           <div className="panel-title">
             <h2>Lodges</h2>
@@ -349,6 +402,37 @@ function App() {
               </article>
             ))}
           </div>
+        </section>
+      ) : (
+        <section className="panel">
+          <div className="panel-title">
+            <h2>Backup</h2>
+          </div>
+
+          <div className="backup-grid">
+            <article className="backup-card">
+              <div>
+                <h3>Export JSON</h3>
+                <p>Save a copy of your lodges, special meetings, and visit ticks.</p>
+              </div>
+              <button className="primary" onClick={exportData}>
+                <Download size={18} /> Export
+              </button>
+            </article>
+
+            <article className="backup-card">
+              <div>
+                <h3>Import JSON</h3>
+                <p>Restore a backup from this app. Importing replaces the data on this device.</p>
+              </div>
+              <label className="file-button">
+                <Upload size={18} /> Import
+                <input accept="application/json,.json" type="file" onChange={importData} />
+              </label>
+            </article>
+          </div>
+
+          {backupMessage && <p className="backup-message">{backupMessage}</p>}
         </section>
       )}
 

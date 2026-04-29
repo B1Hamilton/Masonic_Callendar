@@ -2,6 +2,8 @@
 
 A private PWA for tracking regular lodge meetings, special meetings, and visits.
 
+Personal data is stored in the browser on each device. The Backup tab can export that data as JSON and import it again later.
+
 ## Local Development
 
 ```bash
