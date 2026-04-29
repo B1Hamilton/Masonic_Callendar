@@ -1,8 +1,8 @@
 # Masonic Calendar
 
-A private PWA for tracking regular lodge meetings, special meetings, and visits.
+A private PWA for tracking regular lodge meetings, Royal Arch chapters, special meetings, and visits.
 
-Personal data is stored in the browser on each device. The Backup tab can export that data as JSON and import it again later.
+Personal data is stored in the browser on each device. The Backup tab can export lodges, chapters, special meetings, and visit ticks as JSON and import them again later.
 
 ## Local Development
 

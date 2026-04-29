@@ -1,7 +1,7 @@
 import { StrictMode, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { createRoot } from "react-dom/client";
-import { CalendarDays, Check, Download, MapPin, Plus, ScrollText, Settings2, Trash2, Upload } from "lucide-react";
+import { BookOpen, CalendarDays, Check, Download, MapPin, Plus, ScrollText, Settings2, Trash2, Upload } from "lucide-react";
 import "./styles.css";
 
 type Weekday = 0 | 1 | 2 | 3 | 4 | 5 | 6;
@@ -16,6 +16,21 @@ type Lodge = {
   months: number[];
   weekdays: Weekday[];
   ordinals: Ordinal[];
+  notes: string;
+};
+
+type PrincipalVisit = "j" | "h" | "z";
+
+type Chapter = {
+  id: string;
+  name: string;
+  number: string;
+  location: string;
+  time: string;
+  months: number[];
+  weekdays: Weekday[];
+  ordinals: Ordinal[];
+  principalVisits: Record<PrincipalVisit, boolean>;
   notes: string;
 };
 
@@ -37,11 +52,12 @@ type Meeting = {
   location: string;
   time: string;
   notes: string;
-  kind: "regular" | "special";
+  kind: "lodge" | "chapter" | "special";
 };
 
 type Store = {
   lodges: Lodge[];
+  chapters: Chapter[];
   specialMeetings: SpecialMeeting[];
   visited: Record<string, boolean>;
 };
@@ -49,6 +65,7 @@ type Store = {
 const STORAGE_KEY = "masonic-calendar-store-v1";
 const weekdayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const defaultMeetingMonths = [8, 9, 10, 11, 0, 1, 2, 3];
 
 const defaultStore: Store = {
   lodges: [
@@ -58,10 +75,84 @@ const defaultStore: Store = {
       number: "588",
       location: "",
       time: "19:00",
-      months: [8, 9, 10, 11, 0, 1, 2, 3],
+      months: defaultMeetingMonths,
       weekdays: [1],
       ordinals: [1, 3],
       notes: "Meets first and third Monday, September to April.",
+    },
+  ],
+  chapters: [
+    {
+      id: "chapter-5",
+      name: "Linlithgow",
+      number: "5",
+      location: "Linlithgow",
+      time: "",
+      months: defaultMeetingMonths,
+      weekdays: [3],
+      ordinals: [3],
+      principalVisits: { j: false, h: false, z: false },
+      notes: "Meets third Wednesday, September to April.",
+    },
+    {
+      id: "chapter-95",
+      name: "Douglas",
+      number: "95",
+      location: "Bo'ness",
+      time: "",
+      months: defaultMeetingMonths,
+      weekdays: [4],
+      ordinals: [4],
+      principalVisits: { j: false, h: false, z: false },
+      notes: "Meets fourth Thursday, September to April.",
+    },
+    {
+      id: "chapter-104",
+      name: "Mount Moriah",
+      number: "104",
+      location: "Bathgate",
+      time: "",
+      months: defaultMeetingMonths,
+      weekdays: [2],
+      ordinals: [2],
+      principalVisits: { j: false, h: false, z: false },
+      notes: "Meets second Tuesday, September to April.",
+    },
+    {
+      id: "chapter-237",
+      name: "Strathbrock",
+      number: "237",
+      location: "69 Middleton Ave, Uphall",
+      time: "",
+      months: defaultMeetingMonths,
+      weekdays: [1],
+      ordinals: [2],
+      principalVisits: { j: false, h: false, z: false },
+      notes: "Meets second Monday, September to April.",
+    },
+    {
+      id: "chapter-286",
+      name: "Fauldhouse",
+      number: "286",
+      location: "Fauldhouse",
+      time: "",
+      months: defaultMeetingMonths,
+      weekdays: [4],
+      ordinals: [3],
+      principalVisits: { j: false, h: false, z: false },
+      notes: "Meets third Thursday, September to April.",
+    },
+    {
+      id: "chapter-389",
+      name: "Queensferry",
+      number: "389",
+      location: "Queensferry",
+      time: "",
+      months: defaultMeetingMonths,
+      weekdays: [2],
+      ordinals: [1],
+      principalVisits: { j: false, h: false, z: false },
+      notes: "Meets first Tuesday, September to April.",
     },
   ],
   specialMeetings: [],
@@ -73,7 +164,8 @@ function loadStore(): Store {
   if (!raw) return defaultStore;
 
   try {
-    return { ...defaultStore, ...JSON.parse(raw) };
+    const parsed = JSON.parse(raw);
+    return { ...defaultStore, ...parsed, chapters: parsed.chapters ?? defaultStore.chapters };
   } catch {
     return defaultStore;
   }
@@ -86,7 +178,12 @@ function saveStore(store: Store) {
 function isStore(value: unknown): value is Store {
   if (!value || typeof value !== "object") return false;
   const candidate = value as Store;
-  return Array.isArray(candidate.lodges) && Array.isArray(candidate.specialMeetings) && typeof candidate.visited === "object";
+  return (
+    Array.isArray(candidate.lodges) &&
+    (candidate.chapters === undefined || Array.isArray(candidate.chapters)) &&
+    Array.isArray(candidate.specialMeetings) &&
+    typeof candidate.visited === "object"
+  );
 }
 
 function getSeasonStartYear(today = new Date()) {
@@ -114,7 +211,7 @@ function seasonMonths(startYear: number) {
 }
 
 function buildMeetings(store: Store, startYear: number) {
-  const regular = store.lodges.flatMap((lodge) =>
+  const lodgeMeetings = store.lodges.flatMap((lodge) =>
     seasonMonths(startYear)
       .filter(({ month }) => lodge.months.includes(month))
       .flatMap(({ month, year }) =>
@@ -130,7 +227,29 @@ function buildMeetings(store: Store, startYear: number) {
               location: lodge.location,
               time: lodge.time,
               notes: lodge.notes,
-              kind: "regular" as const,
+              kind: "lodge" as const,
+            }))
+        )
+      )
+  );
+
+  const chapterMeetings = store.chapters.flatMap((chapter) =>
+    seasonMonths(startYear)
+      .filter(({ month }) => chapter.months.includes(month))
+      .flatMap(({ month, year }) =>
+        chapter.weekdays.flatMap((weekday) =>
+          chapter.ordinals
+            .map((ordinal) => getMeetingDate(year, month, weekday, ordinal))
+            .filter((date): date is Date => Boolean(date))
+            .map((date) => ({
+              id: `${chapter.id}-${sameDayId(date)}`,
+              date,
+              title: `${chapter.name} Chapter ${chapter.number}`,
+              lodge: `${chapter.name} Chapter ${chapter.number}`,
+              location: chapter.location,
+              time: chapter.time,
+              notes: chapter.notes,
+              kind: "chapter" as const,
             }))
         )
       )
@@ -147,13 +266,13 @@ function buildMeetings(store: Store, startYear: number) {
     kind: "special" as const,
   }));
 
-  return [...regular, ...special].sort((a, b) => a.date.getTime() - b.date.getTime());
+  return [...lodgeMeetings, ...chapterMeetings, ...special].sort((a, b) => a.date.getTime() - b.date.getTime());
 }
 
 function App() {
   const [store, setStore] = useStoredState();
   const [seasonStart, setSeasonStart] = useStateNumber(getSeasonStartYear());
-  const [view, setView] = useStateText<"calendar" | "lodges" | "backup">("calendar");
+  const [view, setView] = useStateText<"calendar" | "lodges" | "chapters" | "backup">("calendar");
   const [showSpecialForm, setShowSpecialForm] = useState(false);
   const [showLodgeForm, setShowLodgeForm] = useState(false);
   const [backupMessage, setBackupMessage] = useState("");
@@ -166,6 +285,17 @@ function App() {
 
   function toggleVisited(id: string) {
     patchStore({ ...store, visited: { ...store.visited, [id]: !store.visited[id] } });
+  }
+
+  function togglePrincipalVisit(chapterId: string, role: PrincipalVisit) {
+    patchStore({
+      ...store,
+      chapters: store.chapters.map((chapter) =>
+        chapter.id === chapterId
+          ? { ...chapter, principalVisits: { ...chapter.principalVisits, [role]: !chapter.principalVisits[role] } }
+          : chapter
+      ),
+    });
   }
 
   function exportData() {
@@ -200,7 +330,7 @@ function App() {
           return;
         }
 
-        patchStore(imported);
+        patchStore({ ...defaultStore, ...imported, chapters: imported.chapters ?? defaultStore.chapters });
         setBackupMessage("Backup imported.");
       } catch {
         setBackupMessage("That file could not be read.");
@@ -280,6 +410,9 @@ function App() {
         </button>
         <button className={view === "lodges" ? "active" : ""} onClick={() => setView("lodges")}>
           <Settings2 size={18} /> Lodges
+        </button>
+        <button className={view === "chapters" ? "active" : ""} onClick={() => setView("chapters")}>
+          <BookOpen size={18} /> Chapters
         </button>
         <button className={view === "backup" ? "active" : ""} onClick={() => setView("backup")}>
           <Download size={18} /> Backup
@@ -399,6 +532,42 @@ function App() {
                 >
                   <Trash2 size={18} /> Delete
                 </button>
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : view === "chapters" ? (
+        <section className="panel">
+          <div className="panel-title">
+            <h2>Chapters</h2>
+          </div>
+
+          <div className="lodge-grid">
+            {store.chapters.map((chapter) => (
+              <article className="lodge-card" key={chapter.id}>
+                <div>
+                  <h3>
+                    {chapter.name} Chapter {chapter.number}
+                  </h3>
+                  <p>{chapter.notes}</p>
+                </div>
+                <p>
+                  {chapter.ordinals.join(" & ")} {chapter.weekdays.map((day) => weekdayNames[day]).join(", ")}
+                </p>
+                <p>
+                  <MapPin size={14} /> {chapter.location}
+                </p>
+                <div className="role-ticks" aria-label={`${chapter.name} principal visits`}>
+                  {(["j", "h", "z"] as PrincipalVisit[]).map((role) => (
+                    <button
+                      className={chapter.principalVisits[role] ? "role-tick active" : "role-tick"}
+                      key={role}
+                      onClick={() => togglePrincipalVisit(chapter.id, role)}
+                    >
+                      {role.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
               </article>
             ))}
           </div>
