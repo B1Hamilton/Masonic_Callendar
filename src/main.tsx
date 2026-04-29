@@ -16,7 +16,15 @@ type Lodge = {
   months: number[];
   weekdays: Weekday[];
   ordinals: Ordinal[];
+  timeOverrides?: MeetingTimeOverride[];
   notes: string;
+};
+
+type MeetingTimeOverride = {
+  month: number;
+  ordinal: Ordinal;
+  weekday: Weekday;
+  time: string;
 };
 
 type PrincipalVisit = "j" | "h" | "z";
@@ -68,20 +76,224 @@ const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep
 const defaultMeetingMonths = [8, 9, 10, 11, 0, 1, 2, 3];
 const defaultPrincipalVisits: Record<PrincipalVisit, boolean> = { j: false, h: false, z: false };
 
+const defaultLodges: Lodge[] = [
+  {
+    id: "torphicen-kilwinning-13",
+    name: "Lodge Torphicen Kilwinning",
+    number: "13",
+    location: "Bathgate",
+    time: "19:30",
+    months: defaultMeetingMonths,
+    weekdays: [2],
+    ordinals: [1, 3],
+    notes: "Meets first and third Tuesday, September to April.",
+  },
+  {
+    id: "ancient-brazen-17",
+    name: "Lodge Ancient Brazen",
+    number: "17",
+    location: "Linlithgow",
+    time: "19:30",
+    months: defaultMeetingMonths,
+    weekdays: [3],
+    ordinals: [2],
+    notes: "Meets second Wednesday, September to April.",
+  },
+  {
+    id: "kirknewton-ratho-85",
+    name: "Lodge Kirknewton & Ratho",
+    number: "85",
+    location: "Ratho",
+    time: "19:30",
+    months: defaultMeetingMonths,
+    weekdays: [1],
+    ordinals: [2],
+    notes: "Meets second Monday, September to April.",
+  },
+  {
+    id: "st-john-mid-calder-272",
+    name: "Lodge St John Mid Calder",
+    number: "272",
+    location: "Mid Calder",
+    time: "19:30",
+    months: defaultMeetingMonths,
+    weekdays: [2],
+    ordinals: [1, 3],
+    notes: "Meets first and third Tuesday, September to April.",
+  },
+  {
+    id: "st-john-crofthead-fauldhouse-374",
+    name: "Lodge St John Crofthead Fauldhouse",
+    number: "374",
+    location: "Fauldhouse",
+    time: "19:30",
+    months: defaultMeetingMonths,
+    weekdays: [4],
+    ordinals: [2, 4],
+    notes: "Meets second and fourth Thursday, September to April.",
+  },
+  {
+    id: "the-douglas-lodge-409",
+    name: "The Douglas Lodge",
+    number: "409",
+    location: "Bo'ness",
+    time: "19:30",
+    months: defaultMeetingMonths,
+    weekdays: [4],
+    ordinals: [1, 3],
+    notes: "Meets first and third Thursday, September to April.",
+  },
+  {
+    id: "st-margaret-548",
+    name: "Lodge St Margaret",
+    number: "548",
+    location: "Queensferry",
+    time: "19:30",
+    months: defaultMeetingMonths,
+    weekdays: [2],
+    ordinals: [2, 4],
+    notes: "Meets second and fourth Tuesday, September to April.",
+  },
+  {
+    id: "callendar-588",
+    name: "Lodge Callendar",
+    number: "588",
+    location: "",
+    time: "19:30",
+    months: defaultMeetingMonths,
+    weekdays: [1],
+    ordinals: [1, 3],
+    timeOverrides: [
+      { month: 10, ordinal: 1, weekday: 1, time: "19:15" },
+      { month: 11, ordinal: 1, weekday: 1, time: "19:00" },
+    ],
+    notes: "Meets first and third Monday, September to April. First Monday in November is 7:15pm; first Monday in December is 7:00pm.",
+  },
+  {
+    id: "st-james-harthill-590",
+    name: "Lodge St James Harthill",
+    number: "590",
+    location: "Harthill",
+    time: "19:30",
+    months: defaultMeetingMonths,
+    weekdays: [3],
+    ordinals: [1],
+    notes: "Meets first Wednesday, September to April.",
+  },
+  {
+    id: "buchan-st-john-636",
+    name: "Lodge Buchan St John",
+    number: "636",
+    location: "Broxburn",
+    time: "19:00",
+    months: defaultMeetingMonths,
+    weekdays: [4],
+    ordinals: [1, 3],
+    notes: "Meets first and third Thursday, September to April.",
+  },
+  {
+    id: "hopebridge-castle-827",
+    name: "Lodge Hopebridge Castle",
+    number: "827",
+    location: "Armadale",
+    time: "19:30",
+    months: defaultMeetingMonths,
+    weekdays: [3],
+    ordinals: [4],
+    notes: "Meets fourth Wednesday, September to April.",
+  },
+  {
+    id: "polkemmet-927",
+    name: "Lodge Polkemmet",
+    number: "927",
+    location: "Whitburn",
+    time: "19:30",
+    months: defaultMeetingMonths,
+    weekdays: [1],
+    ordinals: [1, 3],
+    notes: "Meets first and third Monday, September to April.",
+  },
+  {
+    id: "blackridge-1145",
+    name: "Lodge Blackridge",
+    number: "1145",
+    location: "Armadale",
+    time: "19:30",
+    months: defaultMeetingMonths,
+    weekdays: [2],
+    ordinals: [2],
+    notes: "Meets second Tuesday, September to April.",
+  },
+  {
+    id: "st-john-stoneyburn-1186",
+    name: "Lodge St. John Stoneyburn",
+    number: "1186",
+    location: "Stoneyburn",
+    time: "19:30",
+    months: defaultMeetingMonths,
+    weekdays: [4],
+    ordinals: [1, 3],
+    notes: "Meets first and third Thursday, September to April.",
+  },
+  {
+    id: "hopetoun-st-john-1232",
+    name: "Lodge Hopetoun St John",
+    number: "1232",
+    location: "Linlithgow",
+    time: "19:30",
+    months: defaultMeetingMonths,
+    weekdays: [2],
+    ordinals: [1],
+    notes: "Meets first Tuesday, September to April.",
+  },
+  {
+    id: "st-andrew-livingston-station-1587",
+    name: "Lodge St Andrew Livingston Station",
+    number: "1587",
+    location: "Livingston",
+    time: "19:30",
+    months: defaultMeetingMonths,
+    weekdays: [5],
+    ordinals: [2, 4],
+    notes: "Meets second and fourth Friday, September to April.",
+  },
+  {
+    id: "lord-bruce-1601",
+    name: "Lodge Lord Bruce",
+    number: "1601",
+    location: "Blackburn",
+    time: "19:30",
+    months: defaultMeetingMonths,
+    weekdays: [1],
+    ordinals: [2, 4],
+    notes: "Meets second and fourth Monday, September to April.",
+  },
+  {
+    id: "kirkton-hall-1614",
+    name: "Lodge Kirkton Hall",
+    number: "1614",
+    location: "Blackburn",
+    time: "19:30",
+    months: defaultMeetingMonths,
+    weekdays: [5],
+    ordinals: [3],
+    notes: "Meets third Friday, September to April.",
+  },
+  {
+    id: "almondale-1658",
+    name: "Lodge Almondale",
+    number: "1658",
+    location: "Livingston",
+    time: "19:30",
+    months: defaultMeetingMonths,
+    weekdays: [5],
+    ordinals: [1],
+    notes: "Meets first Friday, September to April.",
+  },
+];
+
 const defaultStore: Store = {
-  lodges: [
-    {
-      id: "callendar-588",
-      name: "Lodge Callendar",
-      number: "588",
-      location: "",
-      time: "19:00",
-      months: defaultMeetingMonths,
-      weekdays: [1],
-      ordinals: [1, 3],
-      notes: "Meets first and third Monday, September to April.",
-    },
-  ],
+  lodges: defaultLodges,
   chapters: [
     {
       id: "chapter-5",
@@ -170,13 +382,34 @@ function normalizeChapter(chapter: Chapter): Chapter {
   };
 }
 
+function normalizeLodge(lodge: Lodge): Lodge {
+  return {
+    ...lodge,
+    months: lodge.months?.length ? lodge.months : defaultMeetingMonths,
+    weekdays: lodge.weekdays ?? [],
+    ordinals: lodge.ordinals ?? [],
+  };
+}
+
+function mergeDefaultLodges(lodges: Lodge[] | undefined) {
+  const existing = lodges ?? [];
+  const existingById = new Map(existing.map((lodge) => [lodge.id, lodge]));
+  const mergedDefaults = defaultLodges.map((defaultLodge) => ({
+    ...existingById.get(defaultLodge.id),
+    ...defaultLodge,
+  }));
+  const customLodges = existing.filter((lodge) => !defaultLodges.some((defaultLodge) => defaultLodge.id === lodge.id));
+
+  return [...mergedDefaults, ...customLodges].map(normalizeLodge);
+}
+
 function normalizeStore(value: Partial<Store>): Store {
   const chapters = value.chapters?.length ? value.chapters : defaultStore.chapters;
 
   return {
     ...defaultStore,
     ...value,
-    lodges: value.lodges ?? defaultStore.lodges,
+    lodges: mergeDefaultLodges(value.lodges),
     chapters: chapters.map(normalizeChapter),
     specialMeetings: value.specialMeetings ?? defaultStore.specialMeetings,
     visited: value.visited ?? defaultStore.visited,
@@ -226,6 +459,14 @@ function getMeetingDate(year: number, month: number, weekday: Weekday, ordinal: 
   return date.getMonth() === month ? date : null;
 }
 
+function getLodgeMeetingTime(lodge: Lodge, date: Date, weekday: Weekday, ordinal: Ordinal) {
+  const override = lodge.timeOverrides?.find(
+    (item) => item.month === date.getMonth() && item.weekday === weekday && item.ordinal === ordinal
+  );
+
+  return override?.time ?? lodge.time;
+}
+
 function seasonMonths(startYear: number) {
   return Array.from({ length: 12 }, (_, index) => {
     const month = (8 + index) % 12;
@@ -240,19 +481,23 @@ function buildMeetings(store: Store, startYear: number) {
       .filter(({ month }) => lodge.months.includes(month))
       .flatMap(({ month, year }) =>
         lodge.weekdays.flatMap((weekday) =>
-          lodge.ordinals
-            .map((ordinal) => getMeetingDate(year, month, weekday, ordinal))
-            .filter((date): date is Date => Boolean(date))
-            .map((date) => ({
+          lodge.ordinals.flatMap((ordinal) => {
+            const date = getMeetingDate(year, month, weekday, ordinal);
+            if (!date) return [];
+
+            return [
+              {
               id: `${lodge.id}-${sameDayId(date)}`,
               date,
               title: `${lodge.name} ${lodge.number}`,
               lodge: `${lodge.name} ${lodge.number}`,
               location: lodge.location,
-              time: lodge.time,
+              time: getLodgeMeetingTime(lodge, date, weekday, ordinal),
               notes: lodge.notes,
               kind: "lodge" as const,
-            }))
+              },
+            ];
+          })
         )
       )
   );
